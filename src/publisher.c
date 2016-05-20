@@ -2,6 +2,7 @@
 #include "stdlib.h"
 #include "string.h"
 #include "MQTTClient.h"
+#include "provenancelib.h"
 
 #define ADDRESS         "tcp://m12.cloudmqtt.com:17065"
 #define CLIENTID        "ExampleClientPub"
@@ -14,7 +15,7 @@
 
 MQTTClient client;
 
-void publish(char* payload, int qos){
+void mqqt_publish(char* topic, char* payload, int qos){
   int rc;
   MQTTClient_message pubmsg = MQTTClient_message_initializer;
   MQTTClient_deliveryToken token;
@@ -22,7 +23,7 @@ void publish(char* payload, int qos){
   pubmsg.payloadlen = strlen(payload);
   pubmsg.qos = qos;
   pubmsg.retained = 0;
-  MQTTClient_publishMessage(client, TOPIC, &pubmsg, &token);
+  MQTTClient_publishMessage(client, topic, &pubmsg, &token);
 }
 
 int main(int argc, char* argv[])
@@ -44,7 +45,7 @@ int main(int argc, char* argv[])
         exit(-1);
     }
 
-    publish(PAYLOAD, QOS);
+    mqqt_publish(TOPIC, PAYLOAD, QOS);
     MQTTClient_disconnect(client, 10000);
     MQTTClient_destroy(&client);
     return rc;

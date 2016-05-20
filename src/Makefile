@@ -1,4 +1,4 @@
-INCLUDES = -I../build/camflow-provenance-lib/include/provenancelib
+INCLUDES = -I../build/camflow-provenance-lib/include
 CCFLAGS = -g -O2 -fpic
 CCC = gcc
 LIB = ../build/camflow-provenance-lib/src/provenancelib.a /usr/local/lib/libpaho-mqtt3c.so
