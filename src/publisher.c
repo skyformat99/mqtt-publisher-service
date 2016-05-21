@@ -24,6 +24,21 @@
 
 MQTTClient client;
 
+void mqtt_connect(void){
+  MQTTClient_connectOptions conn_opts = MQTTClient_connectOptions_initializer;
+  int rc;
+  conn_opts.keepAliveInterval = 20;
+  conn_opts.cleansession = 1;
+  conn_opts.username = USERNAME;
+  conn_opts.password = PASSWORD;
+
+  if ((rc = MQTTClient_connect(client, &conn_opts)) != MQTTCLIENT_SUCCESS)
+  {
+      simplog.writeLog(SIMPLOG_ERROR, "Failed to connect, return code %d\n", rc, rc);
+      exit(-1);
+  }
+}
+
 void mqqt_publish(char* topic, char* payload, int qos){
   int rc;
   MQTTClient_message pubmsg = MQTTClient_message_initializer;
@@ -32,8 +47,12 @@ void mqqt_publish(char* topic, char* payload, int qos){
   pubmsg.payloadlen = strlen(payload);
   pubmsg.qos = qos;
   pubmsg.retained = 0;
-  MQTTClient_publishMessage(client, topic, &pubmsg, &token);
-  rc = MQTTClient_waitForCompletion(client, token, TIMEOUT);
+  do{
+    MQTTClient_publishMessage(client, topic, &pubmsg, &token);
+    rc = MQTTClient_waitForCompletion(client, token, TIMEOUT);
+    if(rc == MQTTCLIENT_DISCONNECTED)
+      mqtt_connect();
+  }while(rc == MQTTCLIENT_DISCONNECTED);
   simplog.writeLog(SIMPLOG_INFO, "%d %s : %s", rc, topic, payload);
 }
 
@@ -124,7 +143,6 @@ struct provenance_ops ops = {
 
 int main(int argc, char* argv[])
 {
-    MQTTClient_connectOptions conn_opts = MQTTClient_connectOptions_initializer;
     int rc;
 
     _init_logs();
@@ -132,16 +150,6 @@ int main(int argc, char* argv[])
 
     MQTTClient_create(&client, ADDRESS, CLIENTID,
         MQTTCLIENT_PERSISTENCE_NONE, NULL);
-    conn_opts.keepAliveInterval = 20;
-    conn_opts.cleansession = 1;
-    conn_opts.username = USERNAME;
-    conn_opts.password = PASSWORD;
-
-    if ((rc = MQTTClient_connect(client, &conn_opts)) != MQTTCLIENT_SUCCESS)
-    {
-        simplog.writeLog(SIMPLOG_ERROR, "Failed to connect %d", rc);
-        exit(-1);
-    }
     mqqt_publish(TOPIC, PAYLOAD, QOS);
 
     rc = provenance_register(&ops);
