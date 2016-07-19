@@ -1,6 +1,7 @@
 all:
 	cd ./build/camflow-provenance-lib && $(MAKE) all
 	cd ./src && $(MAKE) all
+	cd ./test && $(MAKE) all
 
 prepare:
 	mkdir -p build
