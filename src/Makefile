@@ -16,5 +16,8 @@ install:
 	cp --force ./camflow-provenance.service /etc/systemd/system/camflow-provenance.service
 	systemctl enable camflow-provenance.service
 
+restart:
+	systemctl restart camflow-provenance.service
+
 clean:
 	rm -f config.o

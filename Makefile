@@ -13,5 +13,8 @@ prepare:
 install:
 	cd ./src && sudo $(MAKE) install
 
+restart:
+	cd ./src && sudo $(MAKE) restart
+
 clean:
 	cd ./src && $(MAKE) clean

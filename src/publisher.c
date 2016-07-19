@@ -72,7 +72,24 @@ void log_str(struct str_struct* data){
 }
 
 void log_edge(struct edge_struct* edge){
-  append_edge(edge_to_json(edge));
+  switch(edge->type){
+    case ED_OPEN:
+    case ED_READ:
+      append_used( used_to_json(edge) );
+      break;
+    case ED_CREATE:
+      append_generated( generated_to_json(edge) );
+      break;
+    case ED_FORK:
+      append_informed( informed_to_json(edge) );
+      break;
+    case ED_VERSION:
+      append_derived( informed_to_json(edge) );
+      break;
+    default:
+      append_edge( edge_to_json(edge) );
+      break;
+  }
 }
 
 void log_task(struct task_prov_struct* task){
@@ -109,7 +126,7 @@ void log_file_name(struct file_name_struct* f_name){
 }
 
 void log_ifc(struct ifc_context_struct* ifc){
-  append_entity(ifc_to_json(ifc));
+  //append_entity(ifc_to_json(ifc));
 }
 
 struct provenance_ops ops = {
@@ -129,7 +146,9 @@ struct provenance_ops ops = {
 
 void print_json(char* json){
   sleep(1); // demo use free version we don't want to go over bandwith limit
-  mqqt_publish("camflow", json, QOS);
+  if(strlen(json)>100){
+    mqqt_publish("camflow", json, QOS);
+  }
 }
 
 int main(int argc, char* argv[])
@@ -148,7 +167,10 @@ int main(int argc, char* argv[])
       exit(rc);
     }
     set_ProvJSON_callback(print_json);
-    while(1) sleep(60);
+    while(1){
+      sleep(60);
+      flush_json();
+    }
 
     // never reached
     provenance_stop();
