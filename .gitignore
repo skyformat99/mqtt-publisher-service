@@ -33,3 +33,6 @@
 
 #build directory
 build/*
+
+#test output
+/test/output.txt

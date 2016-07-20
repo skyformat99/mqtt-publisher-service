@@ -83,8 +83,9 @@ void log_edge(struct edge_struct* edge){
     case ED_FORK:
       append_informed( informed_to_json(edge) );
       break;
+    case ED_WRITE:
     case ED_VERSION:
-      append_derived( informed_to_json(edge) );
+      append_derived( derived_to_json(edge) );
       break;
     default:
       append_edge( edge_to_json(edge) );
@@ -148,6 +149,7 @@ void print_json(char* json){
   sleep(1); // demo use free version we don't want to go over bandwith limit
   if(strlen(json)>100){
     mqqt_publish("camflow", json, QOS);
+    simplog.writeLog(SIMPLOG_INFO, json);
   }
 }
 
