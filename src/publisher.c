@@ -73,8 +73,10 @@ void log_str(struct str_struct* data){
 
 void log_edge(struct edge_struct* edge){
   switch(edge->type){
+    case ED_NAMED:
     case ED_OPEN:
     case ED_READ:
+    case ED_EXEC:
       append_used( used_to_json(edge) );
       break;
     case ED_CREATE:
@@ -158,7 +160,8 @@ int main(int argc, char* argv[])
     int rc;
 
     _init_logs();
-    simplog.writeLog(SIMPLOG_INFO, "audit process pid: %ld", getpid());
+    simplog.writeLog(SIMPLOG_INFO, "MQTT Provenance service");
+    simplog.writeLog(SIMPLOG_INFO, "Main process pid: %ld", getpid());
 
     MQTTClient_create(&client, ADDRESS, CLIENTID,
         MQTTCLIENT_PERSISTENCE_NONE, NULL);
