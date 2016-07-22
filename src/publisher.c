@@ -104,7 +104,19 @@ void log_inode(struct inode_prov_struct* inode){
 }
 
 void log_disc(struct disc_node_struct* node){
-  append_entity(disc_to_json(node));
+  switch(node->identifier.node_id.type){
+    case MSG_DISC_ACTIVITY:
+      append_activity(disc_to_json(node));
+      break;
+    case MSG_DISC_AGENT:
+      append_agent(disc_to_json(node));
+      break;
+    case MSG_DISC_ENTITY:
+    case MSG_DISC_NODE:
+    default:
+      append_entity(disc_to_json(node));
+      break;
+  }
 }
 
 void log_msg(struct msg_msg_struct* msg){
