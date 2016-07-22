@@ -163,7 +163,6 @@ void print_json(char* json){
   sleep(1); // demo use free version we don't want to go over bandwith limit
   if(strlen(json)>100){
     mqqt_publish("camflow", json, QOS);
-    simplog.writeLog(SIMPLOG_INFO, json);
   }
 }
 
@@ -185,7 +184,7 @@ int main(int argc, char* argv[])
     }
     set_ProvJSON_callback(print_json);
     while(1){
-      sleep(60);
+      sleep(10);
       flush_json();
     }
 
