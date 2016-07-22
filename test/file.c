@@ -6,6 +6,10 @@
 #include <string.h>
 
 #include "provenancelib.h"
+#include "provenancePovJSON.h"
+
+prov_identifier_t last;
+prov_identifier_t current;
 
 int cp(const char *to, const char *from)
 {
@@ -14,21 +18,24 @@ int cp(const char *to, const char *from)
     ssize_t nread;
     int saved_errno;
 
-    fd_from = open(from, O_RDONLY);
+    fd_from = open(from, O_RDONLY); disclose_activity_ProvJSON("\"rdt:name\":\"fd_from = open(from, O_RDONLY);\", \"rdt:scriptLine\":\"21\"", &current);
+
+
     if (fd_from < 0)
         return -1;
 
-    fd_to = open(to, O_WRONLY | O_CREAT | O_EXCL, 0666);
+    fd_to = open(to, O_WRONLY | O_CREAT | O_EXCL, 0666); disclose_activity_ProvJSON("\"rdt:name\":\"fd_to = open(to, O_WRONLY | O_CREAT | O_EXCL, 0666);\", \"rdt:scriptLine\":\"27\"", &current);
     if (fd_to < 0)
         goto out_error;
 
     while (nread = read(fd_from, buf, sizeof buf), nread > 0)
     {
+        disclose_activity_ProvJSON("\"rdt:name\":\"while (nread = read(fd_from, buf, sizeof buf), nread > 0)\", \"rdt:scriptLine\":\"31\"", &current);
         char *out_ptr = buf;
         ssize_t nwritten;
 
         do {
-            nwritten = write(fd_to, out_ptr, nread);
+            nwritten = write(fd_to, out_ptr, nread); disclose_activity_ProvJSON("\"rdt:name\":\"nwritten = write(fd_to, out_ptr, nread);\", \"rdt:scriptLine\":\"38\"", &current);
 
             if (nwritten >= 0)
             {
