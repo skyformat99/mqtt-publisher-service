@@ -83,6 +83,7 @@ void log_edge(struct edge_struct* edge){
       append_generated( generated_to_json(edge) );
       break;
     case ED_FORK:
+    case ED_VERSION_PROCESS:
       append_informed( informed_to_json(edge) );
       break;
     case ED_WRITE:
