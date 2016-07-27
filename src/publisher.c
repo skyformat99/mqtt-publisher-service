@@ -77,6 +77,7 @@ void log_edge(struct edge_struct* edge){
     case ED_OPEN:
     case ED_READ:
     case ED_EXEC:
+    case ED_SEARCH:
       append_used( used_to_json(edge) );
       break;
     case ED_CREATE:
