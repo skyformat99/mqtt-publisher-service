@@ -68,7 +68,7 @@ void init( void ){
 }
 
 void log_str(struct str_struct* data){
-  //append_entity(str_msg_to_json(data));
+  append_message(str_msg_to_json(data));
 }
 
 void log_edge(struct edge_struct* edge){
