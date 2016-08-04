@@ -5,13 +5,16 @@ LIB = ../build/camflow-provenance-lib/src/provenancelib.a -lpthread
 
 .SUFFIXES: .c
 
-all: std file
+all: std file exec
 
 std:
 	$(CCC) $(INCLUDES) std.c $(LIB) -o std.o $(CCFLAGS)
 
 file:
 	$(CCC) $(INCLUDES) file.c $(LIB) -o file.o $(CCFLAGS)
+
+exec:
+	$(CCC) $(INCLUDES) exec.c $(LIB) -o exec.o $(CCFLAGS)
 
 clean:
 	rm -f *.o
