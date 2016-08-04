@@ -16,5 +16,8 @@ file:
 exec:
 	$(CCC) $(INCLUDES) exec.c $(LIB) -o exec.o $(CCFLAGS)
 
+exec:
+	$(CCC) $(INCLUDES) fork.c $(LIB) -o fork.o $(CCFLAGS)
+
 clean:
 	rm -f *.o
