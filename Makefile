@@ -2,7 +2,6 @@ all:
 	cd ./build/camflow-provenance-lib && $(MAKE) clean
 	cd ./build/camflow-provenance-lib && $(MAKE) all
 	cd ./src && $(MAKE) all
-	cd ./test && $(MAKE) all
 
 prepare:
 	mkdir -p build
@@ -20,5 +19,4 @@ restart:
 
 clean:
 	cd ./src && $(MAKE) clean
-	cd ./test && $(MAKE) clean
 	cd ./build/camflow-provenance-lib && $(MAKE) clean
