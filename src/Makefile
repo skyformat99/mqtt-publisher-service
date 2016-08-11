@@ -1,7 +1,7 @@
-INCLUDES = -I../build/camflow-provenance-lib/include -I../build/camflow-provenance-lib/simplelogger
+INCLUDES = -I../build/SimpleLogger
 CCFLAGS = -g -O2 -fpic
 CCC = gcc
-LIB = ../build/camflow-provenance-lib/src/provenancelib.a /usr/local/lib/libpaho-mqtt3c.so -lpthread ../build/camflow-provenance-lib/simplelogger/simplog.a
+LIB = /usr/local/lib/provenancelib.a /usr/local/lib/libpaho-mqtt3c.so -lpthread ../build/SimpleLogger/libsimplog.a
 .SUFFIXES: .c
 
 all:
@@ -20,4 +20,4 @@ restart:
 	systemctl restart camflow-provenance.service
 
 clean:
-	rm -f config.o
+	rm -f publisher.o
