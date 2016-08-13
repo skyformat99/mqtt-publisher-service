@@ -1,13 +1,5 @@
-SRC = ./build/inih/ini.c
-OBJ = $(SRC:.c=.o)
-OUT = ./build/inih/inih.a
-CCFLAGS = -g -O2 -fpic
-CCC = gcc
-
 all:
 	cd ./src && $(MAKE) all
-
-
 
 prepare:
 	mkdir -p build
