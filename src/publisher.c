@@ -10,26 +10,59 @@
 #include "provenancelib.h"
 #include "provenancePovJSON.h"
 #include "simplog.h"
+#include "ini.h"
 
-#define	LOG_FILE "/tmp/audit.log"
+#define	LOG_PATH "/tmp/audit.log"
+#define CONFIG_PATH "/etc/camflow-mqtt.ini"
 #define gettid() syscall(SYS_gettid)
-
-#define ADDRESS         "tcp://m12.cloudmqtt.com:17065"
-#define CLIENTID        "ExampleClientPub"
-#define USERNAME        "camflow"
-#define PASSWORD        "test"
-#define QOS             1
 #define TIMEOUT         10000L
 
 MQTTClient client;
+
+typedef struct{
+  char address[PATH_MAX]; // assuming we could use unix socket
+  char client_id[1024];
+  char username[1024];
+  char password[1024];
+  int qos;
+} configuration;
+
+configuration config;
+
+static int handler(void* user, const char* section, const char* name,
+                   const char* value)
+{
+    configuration* pconfig = (configuration*)user;
+
+    #define MATCH(s, n) strcmp(section, s) == 0 && strcmp(name, n) == 0
+    if(MATCH("mqtt", "qos")) {
+      pconfig->qos = atoi(value);
+      simplog.writeLog(SIMPLOG_INFO, "MQTT QOS %d", pconfig->qos);
+    } else if (MATCH("mqtt", "address")) {
+      strncpy(pconfig->address, value, PATH_MAX);
+      simplog.writeLog(SIMPLOG_INFO, "MQTT address %s", pconfig->address);
+    } else if(MATCH("mqtt", "client_id")) {
+      strncpy(pconfig->client_id, value, 1024);
+      simplog.writeLog(SIMPLOG_INFO, "MQTT client id %s", pconfig->client_id);
+    }else if(MATCH("mqtt", "username")){
+      strncpy(pconfig->username, value, 1024);
+      simplog.writeLog(SIMPLOG_INFO, "MQTT username %s", pconfig->username);
+    }else if(MATCH("mqtt", "password")){
+      strncpy(pconfig->password, value, 1024);
+      simplog.writeLog(SIMPLOG_INFO, "MQTT password %s", pconfig->password);
+    } else {
+        return 0;  /* unknown section/name, error */
+    }
+    return 1;
+}
 
 void mqtt_connect(void){
   MQTTClient_connectOptions conn_opts = MQTTClient_connectOptions_initializer;
   int rc;
   conn_opts.keepAliveInterval = 20;
   conn_opts.cleansession = 1;
-  conn_opts.username = USERNAME;
-  conn_opts.password = PASSWORD;
+  conn_opts.username = config.username;
+  conn_opts.password = config.password;
 
   if ((rc = MQTTClient_connect(client, &conn_opts)) != MQTTCLIENT_SUCCESS)
   {
@@ -56,7 +89,7 @@ void mqqt_publish(char* topic, char* payload, int qos){
 }
 
 void _init_logs( void ){
-  simplog.setLogFile(LOG_FILE);
+  simplog.setLogFile(LOG_PATH);
   simplog.setLineWrap(false);
   simplog.setLogSilentMode(true);
   simplog.setLogDebugLevel(SIMPLOG_VERBOSE);
@@ -164,7 +197,7 @@ struct provenance_ops ops = {
 void print_json(char* json){
   sleep(1); // demo use free version we don't want to go over bandwith limit
   if(strlen(json)>100){
-    mqqt_publish("camflow", json, QOS);
+    mqqt_publish("camflow", json, config.qos);
   }
 }
 
@@ -176,7 +209,14 @@ int main(int argc, char* argv[])
     simplog.writeLog(SIMPLOG_INFO, "MQTT Provenance service");
     simplog.writeLog(SIMPLOG_INFO, "Main process pid: %ld", getpid());
 
-    MQTTClient_create(&client, ADDRESS, CLIENTID,
+    memset(&config, 0, sizeof(configuration));
+
+    if (ini_parse(CONFIG_PATH, handler, &config) < 0) {
+        simplog.writeLog(SIMPLOG_ERROR, "Can't load '%s'", CONFIG_PATH);
+        exit(-1);
+    }
+
+    MQTTClient_create(&client, config.address, config.client_id,
         MQTTCLIENT_PERSISTENCE_NONE, NULL);
 
     rc = provenance_register(&ops);
