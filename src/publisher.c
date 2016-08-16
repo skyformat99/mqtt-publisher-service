@@ -227,6 +227,7 @@ int main(int argc, char* argv[])
     set_ProvJSON_callback(print_json);
     while(1){
       sleep(10);
+      provenance_flush();
       flush_json();
     }
 
