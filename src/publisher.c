@@ -104,28 +104,28 @@ void log_str(struct str_struct* data){
   append_message(str_msg_to_json(data));
 }
 
-void log_edge(struct edge_struct* edge){
-  switch(edge->type){
-    case ED_NAMED:
-    case ED_OPEN:
-    case ED_READ:
-    case ED_EXEC:
-    case ED_SEARCH:
-      append_used( used_to_json(edge) );
+void log_relation(struct relation_struct* relation){
+  switch(relation->type){
+    case RL_NAMED:
+    case RL_OPEN:
+    case RL_READ:
+    case RL_EXEC:
+    case RL_SEARCH:
+      append_used( used_to_json(relation) );
       break;
-    case ED_CREATE:
-      append_generated( generated_to_json(edge) );
+    case RL_CREATE:
+      append_generated( generated_to_json(relation) );
       break;
-    case ED_FORK:
-    case ED_VERSION_PROCESS:
-      append_informed( informed_to_json(edge) );
+    case RL_FORK:
+    case RL_VERSION_PROCESS:
+      append_informed( informed_to_json(relation) );
       break;
-    case ED_WRITE:
-    case ED_VERSION:
-      append_derived( derived_to_json(edge) );
+    case RL_WRITE:
+    case RL_VERSION:
+      append_derived( derived_to_json(relation) );
       break;
     default:
-      append_edge( edge_to_json(edge) );
+      append_relation( relation_to_json(relation) );
       break;
   }
 }
@@ -181,7 +181,7 @@ void log_ifc(struct ifc_context_struct* ifc){
 
 struct provenance_ops ops = {
   .init=init,
-  .log_edge=log_edge,
+  .log_relation=log_relation,
   .log_task=log_task,
   .log_inode=log_inode,
   .log_str=log_str,
