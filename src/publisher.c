@@ -201,13 +201,11 @@ void print_json(char* json){
   size_t len;
   char* buf;
   const size_t inlen = strlen(json);
-  if(inlen>100){
-    len = compress64encodeBound(inlen);
-    buf = (char*)malloc(len);
-    compress64encode(json, inlen, buf, len);
-    mqqt_publish("camflow", buf, config.qos);
-    free(buf);
-  }
+  len = compress64encodeBound(inlen);
+  buf = (char*)malloc(len);
+  compress64encode(json, inlen, buf, len);
+  mqqt_publish("camflow", buf, config.qos);
+  free(buf);
 }
 
 int main(int argc, char* argv[])
@@ -235,7 +233,7 @@ int main(int argc, char* argv[])
     }
     set_ProvJSON_callback(print_json);
     while(1){
-      sleep(10);
+      sleep(1);
       flush_json();
     }
 
