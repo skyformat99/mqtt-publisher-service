@@ -29,6 +29,7 @@ typedef struct{
 
 configuration config;
 
+/* call back for configuation */
 static int handler(void* user, const char* section, const char* name,
                    const char* value)
 {
@@ -71,6 +72,7 @@ void mqtt_connect(void){
   }
 }
 
+/* publish payload on mqtt */
 void mqqt_publish(char* topic, char* payload, int qos){
   int rc;
   MQTTClient_message pubmsg = MQTTClient_message_initializer;
@@ -227,7 +229,6 @@ int main(int argc, char* argv[])
     set_ProvJSON_callback(print_json);
     while(1){
       sleep(10);
-      provenance_flush();
       flush_json();
     }
 
