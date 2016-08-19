@@ -8,6 +8,7 @@
 
 #include "MQTTClient.h"
 #include "provenancelib.h"
+#include "provenanceutils.h"
 #include "provenancePovJSON.h"
 #include "simplog.h"
 #include "ini.h"
