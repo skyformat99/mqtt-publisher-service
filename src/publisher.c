@@ -76,6 +76,7 @@ void mqtt_connect(void){
 /* publish payload on mqtt */
 void mqqt_publish(char* topic, char* payload, int qos){
   int rc;
+  int retry=0; // give up after a while.
   MQTTClient_message pubmsg = MQTTClient_message_initializer;
   MQTTClient_deliveryToken token;
   pubmsg.payload = payload;
@@ -85,8 +86,13 @@ void mqqt_publish(char* topic, char* payload, int qos){
   do{
     MQTTClient_publishMessage(client, topic, &pubmsg, &token);
     rc = MQTTClient_waitForCompletion(client, token, TIMEOUT);
-    if(rc == MQTTCLIENT_DISCONNECTED)
+    if(rc == MQTTCLIENT_DISCONNECTED){
+      simplog.writeLog(SIMPLOG_INFO, "MQTT disconnected.");
       mqtt_connect();
+      retry++;
+    }
+    if(retry > 10)
+      break;
   }while(rc == MQTTCLIENT_DISCONNECTED);
   simplog.writeLog(SIMPLOG_INFO, "%d %s : %s", rc, topic, payload);
 }
@@ -114,6 +120,8 @@ void log_relation(struct relation_struct* relation){
     case RL_READ:
     case RL_EXEC:
     case RL_SEARCH:
+    case RL_MMAP_READ:
+    case RL_MMAP_EXEC:
       append_used( used_to_json(relation) );
       break;
     case RL_CREATE:
@@ -124,6 +132,7 @@ void log_relation(struct relation_struct* relation){
       append_informed( informed_to_json(relation) );
       break;
     case RL_WRITE:
+    case RL_MMAP_WRITE:
     case RL_VERSION:
       append_derived( derived_to_json(relation) );
       break;
