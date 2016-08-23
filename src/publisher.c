@@ -18,6 +18,11 @@
 #define gettid() syscall(SYS_gettid)
 #define TIMEOUT         10000L
 
+#define MQTT_DEMO
+#ifdef MQTT_DEMO
+  #pragma message("MQTT demo rate limitation")
+#endif
+
 MQTTClient client;
 
 typedef struct{
@@ -87,14 +92,16 @@ void mqqt_publish(char* topic, char* payload, int qos){
     MQTTClient_publishMessage(client, topic, &pubmsg, &token);
     rc = MQTTClient_waitForCompletion(client, token, TIMEOUT);
     if(rc == MQTTCLIENT_DISCONNECTED){
-      simplog.writeLog(SIMPLOG_INFO, "MQTT disconnected.");
+      simplog.writeLog(SIMPLOG_ERROR, "MQTT disconnected.");
       mqtt_connect();
       retry++;
     }
-    if(retry > 10)
+    if(retry > 10){
+      simplog.writeLog(SIMPLOG_ERROR, "Failed connect retry.");
       break;
+    }
   }while(rc == MQTTCLIENT_DISCONNECTED);
-  simplog.writeLog(SIMPLOG_INFO, "%d %s : %s", rc, topic, payload);
+  simplog.writeLog(SIMPLOG_INFO, "Message sent.");
 }
 
 void _init_logs( void ){
@@ -206,6 +213,10 @@ struct provenance_ops ops = {
   .log_ifc=log_ifc
 };
 
+#ifdef MQQT_DEMO
+  static pthread_mutex_t l_mqtt =  PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
+#endif
+
 void print_json(char* json){
   size_t len;
   char* buf;
@@ -213,7 +224,14 @@ void print_json(char* json){
   len = compress64encodeBound(inlen);
   buf = (char*)malloc(len);
   compress64encode(json, inlen, buf, len);
+#ifdef MQQT_DEMO
+  pthread_mutex_lock(&l_mqtt);
+  sleep(1);
+#endif
   mqqt_publish("camflow", buf, config.qos);
+#ifdef MQQT_DEMO
+  pthread_mutex_unlock(&l_mqtt);
+#endif
   free(buf);
 }
 
