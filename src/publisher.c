@@ -100,7 +100,7 @@ void mqqt_publish(char* topic, char* payload, int qos){
       simplog.writeLog(SIMPLOG_ERROR, "Failed connect retry.");
       break;
     }
-  }while(rc == MQTTCLIENT_DISCONNECTED);
+  }while(rc != MQTTCLIENT_SUCCESS);
   simplog.writeLog(SIMPLOG_INFO, "Message sent.");
 }
 
