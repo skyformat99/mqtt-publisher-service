@@ -64,6 +64,7 @@ static int handler(void* user, const char* section, const char* name,
 }
 
 void mqtt_connect(void){
+  pid_t tid = gettid();
   MQTTClient_connectOptions conn_opts = MQTTClient_connectOptions_initializer;
   int rc;
   conn_opts.keepAliveInterval = 20;
@@ -71,15 +72,18 @@ void mqtt_connect(void){
   conn_opts.username = config.username;
   conn_opts.password = config.password;
 
+  simplog.writeLog(SIMPLOG_INFO, "Connecting to MQTT... (%ld)", tid);
   if ((rc = MQTTClient_connect(client, &conn_opts)) != MQTTCLIENT_SUCCESS)
   {
-      simplog.writeLog(SIMPLOG_ERROR, "Failed to connect, return code %d\n", rc, rc);
+      simplog.writeLog(SIMPLOG_ERROR, "Failed to connect, return code %d\n", rc);
       exit(-1);
   }
+  simplog.writeLog(SIMPLOG_INFO, "Connected (%ld)", tid);
 }
 
 /* publish payload on mqtt */
 void mqqt_publish(char* topic, char* payload, int qos){
+  pid_t tid = gettid();
   int rc;
   int retry=0; // give up after a while.
   MQTTClient_message pubmsg = MQTTClient_message_initializer;
@@ -89,19 +93,22 @@ void mqqt_publish(char* topic, char* payload, int qos){
   pubmsg.qos = qos;
   pubmsg.retained = 0;
   do{
+    if( !MQTTClient_isConnected(client) ){
+      mqtt_connect();
+    }
+
     MQTTClient_publishMessage(client, topic, &pubmsg, &token);
     rc = MQTTClient_waitForCompletion(client, token, TIMEOUT);
-    if(rc == MQTTCLIENT_DISCONNECTED){
-      simplog.writeLog(SIMPLOG_ERROR, "MQTT disconnected.");
-      mqtt_connect();
+    if(rc != MQTTCLIENT_SUCCESS){
+      simplog.writeLog(SIMPLOG_ERROR, "MQTT disconnected error: %d (%ld)", rc, tid);
       retry++;
     }
     if(retry > 10){
-      simplog.writeLog(SIMPLOG_ERROR, "Failed connect retry.");
+      simplog.writeLog(SIMPLOG_ERROR, "Failed connect retry (%ld)", tid);
       break;
     }
   }while(rc != MQTTCLIENT_SUCCESS);
-  simplog.writeLog(SIMPLOG_INFO, "Message sent.");
+  simplog.writeLog(SIMPLOG_INFO, "Message sent (%ld)", tid);
 }
 
 void _init_logs( void ){
@@ -113,7 +120,7 @@ void _init_logs( void ){
 
 void init( void ){
   pid_t tid = gettid();
-  simplog.writeLog(SIMPLOG_INFO, "audit writer thread, tid:%ld", tid);
+  simplog.writeLog(SIMPLOG_INFO, "Init audit thread (%ld)", tid);
 }
 
 void log_str(struct str_struct* data){
@@ -252,6 +259,7 @@ int main(int argc, char* argv[])
 
     MQTTClient_create(&client, config.address, config.client_id,
         MQTTCLIENT_PERSISTENCE_NONE, NULL);
+    mqtt_connect();
 
     rc = provenance_register(&ops);
     if(rc){
