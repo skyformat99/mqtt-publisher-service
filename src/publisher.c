@@ -8,6 +8,7 @@
 
 #include "MQTTClient.h"
 #include "provenancelib.h"
+#include "provenanceutils.h"
 #include "provenancePovJSON.h"
 #include "simplog.h"
 #include "ini.h"
@@ -16,6 +17,11 @@
 #define CONFIG_PATH "/etc/camflow-mqtt.ini"
 #define gettid() syscall(SYS_gettid)
 #define TIMEOUT         10000L
+
+#define MQTT_DEMO
+#ifdef MQTT_DEMO
+  #pragma message("MQTT demo rate limitation")
+#endif
 
 MQTTClient client;
 
@@ -29,6 +35,7 @@ typedef struct{
 
 configuration config;
 
+/* call back for configuation */
 static int handler(void* user, const char* section, const char* name,
                    const char* value)
 {
@@ -57,6 +64,7 @@ static int handler(void* user, const char* section, const char* name,
 }
 
 void mqtt_connect(void){
+  pid_t tid = gettid();
   MQTTClient_connectOptions conn_opts = MQTTClient_connectOptions_initializer;
   int rc;
   conn_opts.keepAliveInterval = 20;
@@ -64,15 +72,20 @@ void mqtt_connect(void){
   conn_opts.username = config.username;
   conn_opts.password = config.password;
 
+  simplog.writeLog(SIMPLOG_INFO, "Connecting to MQTT... (%ld)", tid);
   if ((rc = MQTTClient_connect(client, &conn_opts)) != MQTTCLIENT_SUCCESS)
   {
-      simplog.writeLog(SIMPLOG_ERROR, "Failed to connect, return code %d\n", rc, rc);
+      simplog.writeLog(SIMPLOG_ERROR, "Failed to connect, return code %d\n", rc);
       exit(-1);
   }
+  simplog.writeLog(SIMPLOG_INFO, "Connected (%ld)", tid);
 }
 
+/* publish payload on mqtt */
 void mqqt_publish(char* topic, char* payload, int qos){
+  pid_t tid = gettid();
   int rc;
+  int retry=0; // give up after a while.
   MQTTClient_message pubmsg = MQTTClient_message_initializer;
   MQTTClient_deliveryToken token;
   pubmsg.payload = payload;
@@ -80,12 +93,22 @@ void mqqt_publish(char* topic, char* payload, int qos){
   pubmsg.qos = qos;
   pubmsg.retained = 0;
   do{
+    if( !MQTTClient_isConnected(client) ){
+      mqtt_connect();
+    }
+
     MQTTClient_publishMessage(client, topic, &pubmsg, &token);
     rc = MQTTClient_waitForCompletion(client, token, TIMEOUT);
-    if(rc == MQTTCLIENT_DISCONNECTED)
-      mqtt_connect();
-  }while(rc == MQTTCLIENT_DISCONNECTED);
-  simplog.writeLog(SIMPLOG_INFO, "%d %s : %s", rc, topic, payload);
+    if(rc != MQTTCLIENT_SUCCESS){
+      simplog.writeLog(SIMPLOG_ERROR, "MQTT disconnected error: %d (%ld)", rc, tid);
+      retry++;
+    }
+    if(retry > 10){
+      simplog.writeLog(SIMPLOG_ERROR, "Failed connect retry (%ld)", tid);
+      break;
+    }
+  }while(rc != MQTTCLIENT_SUCCESS);
+  simplog.writeLog(SIMPLOG_INFO, "Message sent (%ld)", tid);
 }
 
 void _init_logs( void ){
@@ -97,7 +120,7 @@ void _init_logs( void ){
 
 void init( void ){
   pid_t tid = gettid();
-  simplog.writeLog(SIMPLOG_INFO, "audit writer thread, tid:%ld", tid);
+  simplog.writeLog(SIMPLOG_INFO, "Init audit thread (%ld)", tid);
 }
 
 void log_str(struct str_struct* data){
@@ -111,6 +134,8 @@ void log_relation(struct relation_struct* relation){
     case RL_READ:
     case RL_EXEC:
     case RL_SEARCH:
+    case RL_MMAP_READ:
+    case RL_MMAP_EXEC:
       append_used( used_to_json(relation) );
       break;
     case RL_CREATE:
@@ -121,6 +146,7 @@ void log_relation(struct relation_struct* relation){
       append_informed( informed_to_json(relation) );
       break;
     case RL_WRITE:
+    case RL_MMAP_WRITE:
     case RL_VERSION:
       append_derived( derived_to_json(relation) );
       break;
@@ -194,11 +220,26 @@ struct provenance_ops ops = {
   .log_ifc=log_ifc
 };
 
+#ifdef MQQT_DEMO
+  static pthread_mutex_t l_mqtt =  PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
+#endif
+
 void print_json(char* json){
-  sleep(1); // demo use free version we don't want to go over bandwith limit
-  if(strlen(json)>100){
-    mqqt_publish("camflow", json, config.qos);
-  }
+  size_t len;
+  char* buf;
+  const size_t inlen = strlen(json);
+  len = compress64encodeBound(inlen);
+  buf = (char*)malloc(len);
+  compress64encode(json, inlen, buf, len);
+#ifdef MQQT_DEMO
+  pthread_mutex_lock(&l_mqtt);
+  sleep(1);
+#endif
+  mqqt_publish("camflow", buf, config.qos);
+#ifdef MQQT_DEMO
+  pthread_mutex_unlock(&l_mqtt);
+#endif
+  free(buf);
 }
 
 int main(int argc, char* argv[])
@@ -218,6 +259,7 @@ int main(int argc, char* argv[])
 
     MQTTClient_create(&client, config.address, config.client_id,
         MQTTCLIENT_PERSISTENCE_NONE, NULL);
+    mqtt_connect();
 
     rc = provenance_register(&ops);
     if(rc){
@@ -226,8 +268,7 @@ int main(int argc, char* argv[])
     }
     set_ProvJSON_callback(print_json);
     while(1){
-      sleep(10);
-      provenance_flush();
+      sleep(1);
       flush_json();
     }
 
