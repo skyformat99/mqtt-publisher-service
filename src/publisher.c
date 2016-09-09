@@ -35,13 +35,13 @@ typedef struct{
 
 configuration config;
 
+#define MATCH(s, n) (strcmp(section, s) == 0 && strcmp(name, n) == 0)
 /* call back for configuation */
 static int handler(void* user, const char* section, const char* name,
                    const char* value)
 {
     configuration* pconfig = (configuration*)user;
 
-    #define MATCH(s, n) strcmp(section, s) == 0 && strcmp(name, n) == 0
     if(MATCH("mqtt", "qos")) {
       pconfig->qos = atoi(value);
       simplog.writeLog(SIMPLOG_INFO, "MQTT QOS %d", pconfig->qos);
@@ -57,7 +57,9 @@ static int handler(void* user, const char* section, const char* name,
     }else if(MATCH("mqtt", "password")){
       strncpy(pconfig->password, value, 1024);
       simplog.writeLog(SIMPLOG_INFO, "MQTT password %s", pconfig->password);
-    } else {
+    } else if(strcmp(section, "taint") == 0){
+      add_taint(strtoul(value, NULL, 0), name);
+    }else{
         return 0;  /* unknown section/name, error */
     }
     return 1;
