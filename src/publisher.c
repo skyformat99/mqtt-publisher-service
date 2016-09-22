@@ -26,17 +26,17 @@
 MQTTClient client;
 
 #define MAX_TOPIC_LENGTH 256
-static char topic[MAX_TOPIC_LENGTH];
 
 typedef struct{
+  int qos;
   char address[PATH_MAX]; // assuming we could use unix socket
-  char client_id[1024];
   char username[1024];
   char password[1024];
-  int qos;
+  char topic[MAX_TOPIC_LENGTH];
+  char client_id[MAX_TOPIC_LENGTH];
 } configuration;
 
-configuration config;
+static configuration config;
 
 #define MATCH(s, n) (strcmp(section, s) == 0 && strcmp(name, n) == 0)
 /* call back for configuation */
@@ -48,12 +48,9 @@ static int handler(void* user, const char* section, const char* name,
     if(MATCH("mqtt", "qos")) {
       pconfig->qos = atoi(value);
       simplog.writeLog(SIMPLOG_INFO, "MQTT QOS %d", pconfig->qos);
-    } else if (MATCH("mqtt", "address")) {
+    }else if (MATCH("mqtt", "address")) {
       strncpy(pconfig->address, value, PATH_MAX);
       simplog.writeLog(SIMPLOG_INFO, "MQTT address %s", pconfig->address);
-    } else if(MATCH("mqtt", "client_id")) {
-      strncpy(pconfig->client_id, value, 1024);
-      simplog.writeLog(SIMPLOG_INFO, "MQTT client id %s", pconfig->client_id);
     }else if(MATCH("mqtt", "username")){
       strncpy(pconfig->username, value, 1024);
       simplog.writeLog(SIMPLOG_INFO, "MQTT username %s", pconfig->username);
@@ -68,17 +65,21 @@ static int handler(void* user, const char* section, const char* name,
     return 1;
 }
 
-void mqtt_connect(void){
+void mqtt_connect(bool cleansession){
   pid_t tid = gettid();
   MQTTClient_connectOptions conn_opts = MQTTClient_connectOptions_initializer;
   int rc;
   conn_opts.keepAliveInterval = 20;
-  conn_opts.cleansession = 0;
+  if(cleansession){
+    conn_opts.cleansession = 1;
+  }else{
+    conn_opts.cleansession = 0;
+  }
   conn_opts.username = config.username;
   conn_opts.password = config.password;
 
   simplog.writeLog(SIMPLOG_INFO, "Connecting to MQTT... (%ld)", tid);
-  if ((rc = MQTTClient_connect(client, &conn_opts)) != MQTTCLIENT_SUCCESS)
+  if ((rc = MQTTClient_connect(client, &conn_opts)) < 0)
   {
       simplog.writeLog(SIMPLOG_ERROR, "Failed to connect, return code %d\n", rc);
       exit(-1);
@@ -99,7 +100,7 @@ void mqqt_publish(char* topic, char* payload, int qos){
   pubmsg.retained = 0;
   do{
     if( !MQTTClient_isConnected(client) ){
-      mqtt_connect();
+      mqtt_connect(true);
     }
 
     MQTTClient_publishMessage(client, topic, &pubmsg, &token);
@@ -240,7 +241,7 @@ void print_json(char* json){
   pthread_mutex_lock(&l_mqtt);
   sleep(1);
 #endif
-  mqqt_publish(topic, buf, config.qos);
+  mqqt_publish(config.topic, buf, config.qos);
 #ifdef MQQT_DEMO
   pthread_mutex_unlock(&l_mqtt);
 #endif
@@ -265,14 +266,15 @@ int main(int argc, char* argv[])
 
     MQTTClient_create(&client, config.address, config.client_id,
         MQTTCLIENT_PERSISTENCE_NONE, NULL);
-    mqtt_connect();
+    mqtt_connect(false);
 
     rc = provenance_get_machine_id(&machine_id);
     if(rc<0){
       simplog.writeLog(SIMPLOG_ERROR, "Failed retrieving machine ID.");
       exit(rc);
     }
-    snprintf(topic, MAX_TOPIC_LENGTH, "camflow/%u/provenance", machine_id);
+    snprintf(config.topic, MAX_TOPIC_LENGTH, "camflow/%u/provenance", machine_id);
+    snprintf(config.client_id, MAX_TOPIC_LENGTH, "camflow:%u", machine_id);
 
     rc = provenance_register(&ops);
     if(rc){
