@@ -25,6 +25,9 @@
 
 MQTTClient client;
 
+#define MAX_TOPIC_LENGTH 256
+static char topic[MAX_TOPIC_LENGTH];
+
 typedef struct{
   char address[PATH_MAX]; // assuming we could use unix socket
   char client_id[1024];
@@ -110,7 +113,7 @@ void mqqt_publish(char* topic, char* payload, int qos){
       break;
     }
   }while(rc != MQTTCLIENT_SUCCESS);
-  simplog.writeLog(SIMPLOG_INFO, "Message sent (%ld)", tid);
+  simplog.writeLog(SIMPLOG_INFO, "Message sent to %s (%ld)", topic, tid);
 }
 
 void _init_logs( void ){
@@ -237,7 +240,7 @@ void print_json(char* json){
   pthread_mutex_lock(&l_mqtt);
   sleep(1);
 #endif
-  mqqt_publish("camflow", buf, config.qos);
+  mqqt_publish(topic, buf, config.qos);
 #ifdef MQQT_DEMO
   pthread_mutex_unlock(&l_mqtt);
 #endif
@@ -247,6 +250,7 @@ void print_json(char* json){
 int main(int argc, char* argv[])
 {
     int rc;
+    uint32_t machine_id;
 
     _init_logs();
     simplog.writeLog(SIMPLOG_INFO, "MQTT Provenance service");
@@ -262,6 +266,13 @@ int main(int argc, char* argv[])
     MQTTClient_create(&client, config.address, config.client_id,
         MQTTCLIENT_PERSISTENCE_NONE, NULL);
     mqtt_connect();
+
+    rc = provenance_get_machine_id(&machine_id);
+    if(rc<0){
+      simplog.writeLog(SIMPLOG_ERROR, "Failed retrieving machine ID.");
+      exit(rc);
+    }
+    snprintf(topic, MAX_TOPIC_LENGTH, "camflow/%u/provenance", machine_id);
 
     rc = provenance_register(&ops);
     if(rc){
