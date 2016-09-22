@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -5,6 +6,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/syscall.h>
+#include <pthread.h>
 
 #include "MQTTClient.h"
 #include "provenancelib.h"
@@ -17,11 +19,6 @@
 #define CONFIG_PATH "/etc/camflow-mqtt.ini"
 #define gettid() syscall(SYS_gettid)
 #define TIMEOUT         10000L
-
-#define MQTT_DEMO
-#ifdef MQTT_DEMO
-  #pragma message("MQTT demo rate limitation")
-#endif
 
 MQTTClient client;
 
@@ -75,6 +72,7 @@ void mqtt_connect(bool cleansession){
   }else{
     conn_opts.cleansession = 0;
   }
+  conn_opts.reliable = 1;
   conn_opts.username = config.username;
   conn_opts.password = config.password;
 
@@ -87,6 +85,7 @@ void mqtt_connect(bool cleansession){
   simplog.writeLog(SIMPLOG_INFO, "Connected (%ld)", tid);
 }
 
+static pthread_mutex_t l_mqtt =  PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 /* publish payload on mqtt */
 void mqqt_publish(char* topic, char* payload, int qos){
   pid_t tid = gettid();
@@ -103,8 +102,10 @@ void mqqt_publish(char* topic, char* payload, int qos){
       mqtt_connect(true);
     }
 
+    pthread_mutex_lock(&l_mqtt); // set to reliable only a message at a time
     MQTTClient_publishMessage(client, topic, &pubmsg, &token);
     rc = MQTTClient_waitForCompletion(client, token, TIMEOUT);
+    pthread_mutex_unlock(&l_mqtt);
     if(rc != MQTTCLIENT_SUCCESS){
       simplog.writeLog(SIMPLOG_ERROR, "MQTT disconnected error: %d (%ld)", rc, tid);
       retry++;
@@ -227,7 +228,7 @@ struct provenance_ops ops = {
 };
 
 #ifdef MQQT_DEMO
-  static pthread_mutex_t l_mqtt =  PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
+
 #endif
 
 void print_json(char* json){
@@ -237,14 +238,7 @@ void print_json(char* json){
   len = compress64encodeBound(inlen);
   buf = (char*)malloc(len);
   compress64encode(json, inlen, buf, len);
-#ifdef MQQT_DEMO
-  pthread_mutex_lock(&l_mqtt);
-  sleep(1);
-#endif
   mqqt_publish(config.topic, buf, config.qos);
-#ifdef MQQT_DEMO
-  pthread_mutex_unlock(&l_mqtt);
-#endif
   free(buf);
 }
 
