@@ -73,7 +73,7 @@ void mqtt_connect(void){
   MQTTClient_connectOptions conn_opts = MQTTClient_connectOptions_initializer;
   int rc;
   conn_opts.keepAliveInterval = 20;
-  conn_opts.cleansession = 1;
+  conn_opts.cleansession = 0;
   conn_opts.username = config.username;
   conn_opts.password = config.password;
 
