@@ -85,7 +85,7 @@ void mqtt_connect(bool cleansession){
   simplog.writeLog(SIMPLOG_INFO, "Connected (%ld)", tid);
 }
 
-static pthread_mutex_t l_mqtt =  PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
+static pthread_mutex_t l_mqtt = PTHREAD_MUTEX_INITIALIZER;
 /* publish payload on mqtt */
 void mqqt_publish(char* topic, char* payload, int qos){
   pid_t tid = gettid();
