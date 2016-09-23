@@ -258,10 +258,6 @@ int main(int argc, char* argv[])
         exit(-1);
     }
 
-    MQTTClient_create(&client, config.address, config.client_id,
-        MQTTCLIENT_PERSISTENCE_NONE, NULL);
-    mqtt_connect(false);
-
     rc = provenance_get_machine_id(&machine_id);
     if(rc<0){
       simplog.writeLog(SIMPLOG_ERROR, "Failed retrieving machine ID.");
@@ -269,6 +265,10 @@ int main(int argc, char* argv[])
     }
     snprintf(config.topic, MAX_TOPIC_LENGTH, "camflow/%u/provenance", machine_id);
     snprintf(config.client_id, MAX_TOPIC_LENGTH, "camflow:%u", machine_id);
+
+    MQTTClient_create(&client, config.address, config.client_id,
+        MQTTCLIENT_PERSISTENCE_NONE, NULL);
+    mqtt_connect(false);
 
     rc = provenance_register(&ops);
     if(rc){
