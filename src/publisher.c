@@ -23,6 +23,7 @@
 MQTTClient client;
 
 #define MAX_TOPIC_LENGTH 256
+#define MAX_MQTT_CLIENT_ID_LENGTH 23 // see https://www.eclipse.org/paho/files/mqttdoc/Cclient/_m_q_t_t_client_8h.html#a5cb44bc0e06bcc95a314d51320a0cd1b
 
 typedef struct{
   int qos;
@@ -30,7 +31,7 @@ typedef struct{
   char username[1024];
   char password[1024];
   char topic[MAX_TOPIC_LENGTH];
-  char client_id[MAX_TOPIC_LENGTH];
+  char client_id[MAX_MQTT_CLIENT_ID_LENGTH];
 } configuration;
 
 static configuration config;
@@ -264,7 +265,7 @@ int main(int argc, char* argv[])
       exit(rc);
     }
     snprintf(config.topic, MAX_TOPIC_LENGTH, "camflow/%u/provenance", machine_id);
-    snprintf(config.client_id, MAX_TOPIC_LENGTH, "camflow:%u", machine_id);
+    snprintf(config.client_id, MAX_MQTT_CLIENT_ID_LENGTH, "%u", machine_id); // should be no more than 23
 
     MQTTClient_create(&client, config.address, config.client_id,
         MQTTCLIENT_PERSISTENCE_NONE, NULL);
