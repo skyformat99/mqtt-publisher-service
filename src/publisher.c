@@ -262,6 +262,7 @@ void print_json(char* json){
 int main(int argc, char* argv[])
 {
     int rc;
+    uint32_t i;
     uint32_t machine_id;
 
     _init_logs();
@@ -282,6 +283,7 @@ int main(int argc, char* argv[])
     }
     snprintf(config.topic, MAX_TOPIC_LENGTH, "camflow/%u/provenance", machine_id);
     snprintf(config.client_id, MAX_MQTT_CLIENT_ID_LENGTH, "%u", machine_id); // should be no more than 23
+    simplog.writeLog(SIMPLOG_INFO, "Main topic: %s.", config.topic);
 
     MQTTClient_create(&client, config.address, config.client_id,
         MQTTCLIENT_PERSISTENCE_NONE, NULL);
@@ -296,7 +298,9 @@ int main(int argc, char* argv[])
     while(1){
       sleep(1);
       flush_json();
-      mqqt_publish("keepalive", NULL, 0, false); // keep alive
+      if(i++%10==0){
+        mqqt_publish("keepalive", NULL, 0, false); // keep alive
+      }
     }
 
     // never reached
