@@ -132,7 +132,6 @@ void mqqt_publish(char* topic, char* payload, int qos, bool retained){
       break;
     }
   }while(rc != MQTTCLIENT_SUCCESS);
-  simplog.writeLog(SIMPLOG_INFO, "Message sent to %s (%ld)", topic, tid);
 }
 
 void _init_logs( void ){
@@ -297,6 +296,7 @@ int main(int argc, char* argv[])
     while(1){
       sleep(1);
       flush_json();
+      mqqt_publish("keepalive", NULL, 0, false); // keep alive
     }
 
     // never reached
