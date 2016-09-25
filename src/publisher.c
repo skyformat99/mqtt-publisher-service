@@ -4,7 +4,6 @@
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <sys/types.h>
 #include <sys/syscall.h>
 #include <pthread.h>
 
@@ -88,25 +87,42 @@ void mqtt_connect(bool cleansession){
 
 static pthread_mutex_t l_mqtt = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 /* publish payload on mqtt */
-void mqqt_publish(char* topic, char* payload, int qos){
+void mqqt_publish(char* topic, char* payload, int qos, bool retained){
   pid_t tid = gettid();
   int rc;
   int retry=0; // give up after a while.
   MQTTClient_message pubmsg = MQTTClient_message_initializer;
   MQTTClient_deliveryToken token;
-  pubmsg.payload = payload;
-  pubmsg.payloadlen = strlen(payload);
+
+  if(payload==NULL){
+    pubmsg.payload = NULL;
+    pubmsg.payloadlen = 0;
+  }else{
+    pubmsg.payload = payload;
+    pubmsg.payloadlen = strlen(payload);
+  }
+
   pubmsg.qos = qos;
-  pubmsg.retained = 0;
+
+  if(retained){
+    pubmsg.retained = 1;
+  }else{
+    pubmsg.retained = 0;
+  }
+
+
   do{
+    pthread_mutex_lock(&l_mqtt); // set to reliable only a message at a time
+
     if( !MQTTClient_isConnected(client) ){
-      mqtt_connect(true);
+      mqtt_connect(false);
     }
 
-    pthread_mutex_lock(&l_mqtt); // set to reliable only a message at a time
     MQTTClient_publishMessage(client, topic, &pubmsg, &token);
     rc = MQTTClient_waitForCompletion(client, token, TIMEOUT);
+
     pthread_mutex_unlock(&l_mqtt);
+
     if(rc != MQTTCLIENT_SUCCESS){
       simplog.writeLog(SIMPLOG_ERROR, "MQTT disconnected error: %d (%ld)", rc, tid);
       retry++;
@@ -213,6 +229,10 @@ void log_ifc(struct ifc_context_struct* ifc){
   //append_entity(ifc_to_json(ifc));
 }
 
+void log_error(char* error){
+  simplog.writeLog(SIMPLOG_ERROR, "From library: %s", error);
+}
+
 struct provenance_ops ops = {
   .init=init,
   .log_relation=log_relation,
@@ -225,12 +245,9 @@ struct provenance_ops ops = {
   .log_sock=log_sock,
   .log_address=log_address,
   .log_file_name=log_file_name,
-  .log_ifc=log_ifc
+  .log_ifc=log_ifc,
+  .log_error=log_error
 };
-
-#ifdef MQQT_DEMO
-
-#endif
 
 void print_json(char* json){
   size_t len;
@@ -239,7 +256,7 @@ void print_json(char* json){
   len = compress64encodeBound(inlen);
   buf = (char*)malloc(len);
   compress64encode(json, inlen, buf, len);
-  mqqt_publish(config.topic, buf, config.qos);
+  mqqt_publish(config.topic, buf, config.qos, false);
   free(buf);
 }
 
@@ -269,7 +286,7 @@ int main(int argc, char* argv[])
 
     MQTTClient_create(&client, config.address, config.client_id,
         MQTTCLIENT_PERSISTENCE_NONE, NULL);
-    mqtt_connect(false);
+    mqtt_connect(true);
 
     rc = provenance_register(&ops);
     if(rc){
@@ -278,7 +295,8 @@ int main(int argc, char* argv[])
     }
     set_ProvJSON_callback(print_json);
     while(1){
-      sleep(1);
+      sleep(5);
+      provenance_flush();
       flush_json();
     }
 
