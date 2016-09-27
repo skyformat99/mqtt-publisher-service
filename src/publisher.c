@@ -161,7 +161,6 @@ void log_relation(struct relation_struct* relation){
     case RL_MMAP_EXEC:
     case RL_ASSOCIATE:
     case RL_BIND:
-    case RL_CONNECT:
     case RL_LISTEN:
     case RL_ACCEPT:
       append_used( used_to_json(relation) );
@@ -176,6 +175,7 @@ void log_relation(struct relation_struct* relation){
     case RL_WRITE:
     case RL_MMAP_WRITE:
     case RL_VERSION:
+    case RL_CONNECT:
       append_derived( derived_to_json(relation) );
       break;
     default:
