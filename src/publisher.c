@@ -160,6 +160,10 @@ void log_relation(struct relation_struct* relation){
     case RL_MMAP_READ:
     case RL_MMAP_EXEC:
     case RL_ASSOCIATE:
+    case RL_BIND:
+    case RL_CONNECT:
+    case RL_LISTEN:
+    case RL_ACCEPT:
       append_used( used_to_json(relation) );
       break;
     case RL_CREATE:
