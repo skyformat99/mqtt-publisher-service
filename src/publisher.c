@@ -159,6 +159,7 @@ void log_relation(struct relation_struct* relation){
     case RL_SEARCH:
     case RL_MMAP_READ:
     case RL_MMAP_EXEC:
+    case RL_ASSOCIATE:
       append_used( used_to_json(relation) );
       break;
     case RL_CREATE:
