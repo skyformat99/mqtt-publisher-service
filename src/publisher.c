@@ -216,9 +216,12 @@ void log_shm(struct shm_struct* shm){
   append_entity(shm_to_json(shm));
 }
 
-
 void log_sock(struct sock_struct* sock){
   append_entity(sock_to_json(sock));
+}
+
+void log_packet(struct pck_struct* pck){
+  append_entity(packet_to_json(pck));
 }
 
 void log_address(struct address_struct* address){
@@ -247,6 +250,7 @@ struct provenance_ops ops = {
   .log_msg=log_msg,
   .log_shm=log_shm,
   .log_sock=log_sock,
+  .log_packet=log_packet,
   .log_address=log_address,
   .log_file_name=log_file_name,
   .log_ifc=log_ifc,
