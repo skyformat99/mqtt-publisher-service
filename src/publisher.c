@@ -176,6 +176,8 @@ void log_relation(struct relation_struct* relation){
     case RL_MMAP_WRITE:
     case RL_VERSION:
     case RL_CONNECT:
+    case RL_SND:
+    case RL_RCV:
       append_derived( derived_to_json(relation) );
       break;
     default:
