@@ -169,7 +169,7 @@ void log_relation(struct relation_struct* relation){
     case RL_CREATE:
       append_generated( generated_to_json(relation) );
       break;
-    case RL_FORK:
+    case RL_CLONE:
     case RL_VERSION_PROCESS:
       append_informed( informed_to_json(relation) );
       break;
