@@ -259,15 +259,19 @@ struct provenance_ops ops = {
   .log_error=log_error
 };
 
-void print_json(char* json){
+void publish_json(const char* json, bool retain){
   size_t len;
   char* buf;
   const size_t inlen = strlen(json);
   len = compress64encodeBound(inlen);
   buf = (char*)malloc(len);
   compress64encode(json, inlen, buf, len);
-  mqqt_publish(config.topic, buf, config.qos, false);
+  mqqt_publish(config.topic, buf, config.qos, retain);
   free(buf);
+}
+
+void print_json(char* json){
+  publish_json(json, false);
 }
 
 int main(int argc, char* argv[])
@@ -275,6 +279,7 @@ int main(int argc, char* argv[])
     int rc;
     uint32_t i;
     uint32_t machine_id;
+    char json[4096];
 
     _init_logs();
     simplog.writeLog(SIMPLOG_INFO, "MQTT Provenance service");
@@ -299,6 +304,8 @@ int main(int argc, char* argv[])
     MQTTClient_create(&client, config.address, config.client_id,
         MQTTCLIENT_PERSISTENCE_NONE, NULL);
     mqtt_connect(true);
+
+    publish_json(machine_description_json(json), true);
 
     rc = provenance_register(&ops);
     if(rc){
