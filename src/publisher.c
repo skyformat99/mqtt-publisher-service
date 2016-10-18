@@ -164,6 +164,8 @@ void log_relation(struct relation_struct* relation){
     case RL_LISTEN:
     case RL_ACCEPT:
     case RL_RCV:
+    case RL_PERM_READ:
+    case RL_PERM_EXEC:
       append_used( used_to_json(relation) );
       break;
     case RL_CREATE:
@@ -178,6 +180,7 @@ void log_relation(struct relation_struct* relation){
     case RL_VERSION:
     case RL_CONNECT:
     case RL_SND:
+    case RL_PERM_WRITE:
       append_derived( derived_to_json(relation) );
       break;
     default:
