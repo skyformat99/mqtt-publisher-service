@@ -150,43 +150,24 @@ void log_str(struct str_struct* data){
   append_message(str_msg_to_json(data));
 }
 
-void log_relation(struct relation_struct* relation){
-  switch(relation->type){
-    case RL_NAMED:
-    case RL_OPEN:
-    case RL_READ:
-    case RL_EXEC:
-    case RL_SEARCH:
-    case RL_MMAP_READ:
-    case RL_MMAP_EXEC:
-    case RL_ASSOCIATE:
-    case RL_BIND:
-    case RL_LISTEN:
-    case RL_ACCEPT:
-    case RL_RCV:
-    case RL_PERM_READ:
-    case RL_PERM_EXEC:
-      append_used( used_to_json(relation) );
-      break;
-    case RL_CREATE:
-      append_generated( generated_to_json(relation) );
-      break;
-    case RL_CLONE:
-    case RL_VERSION_PROCESS:
-      append_informed( informed_to_json(relation) );
-      break;
-    case RL_WRITE:
-    case RL_MMAP_WRITE:
-    case RL_VERSION:
-    case RL_CONNECT:
-    case RL_SND:
-    case RL_PERM_WRITE:
-      append_derived( derived_to_json(relation) );
-      break;
-    default:
-      append_relation( relation_to_json(relation) );
-      break;
-  }
+void log_unknown_relation(struct relation_struct* relation){
+  append_relation(relation_to_json(relation));
+}
+
+void log_derived(struct relation_struct* relation){
+  append_derived(derived_to_json(relation));
+}
+
+void log_generated(struct relation_struct* relation){
+  append_generated(generated_to_json(relation));
+}
+
+void log_used(struct relation_struct* relation){
+  append_used(used_to_json(relation));
+}
+
+void log_informed(struct relation_struct* relation){
+  append_informed(informed_to_json(relation));
 }
 
 void log_task(struct task_prov_struct* task){
@@ -199,14 +180,13 @@ void log_inode(struct inode_prov_struct* inode){
 
 void log_disc(struct disc_node_struct* node){
   switch(node->identifier.node_id.type){
-    case MSG_DISC_ACTIVITY:
+    case ACT_DISC:
       append_activity(disc_to_json(node));
       break;
-    case MSG_DISC_AGENT:
+    case AGT_DISC:
       append_agent(disc_to_json(node));
       break;
-    case MSG_DISC_ENTITY:
-    case MSG_DISC_NODE:
+    case ENT_DISC:
     default:
       append_entity(disc_to_json(node));
       break;
@@ -219,10 +199,6 @@ void log_msg(struct msg_msg_struct* msg){
 
 void log_shm(struct shm_struct* shm){
   append_entity(shm_to_json(shm));
-}
-
-void log_sock(struct sock_struct* sock){
-  append_entity(sock_to_json(sock));
 }
 
 void log_packet(struct pck_struct* pck){
@@ -247,14 +223,17 @@ void log_error(char* error){
 
 struct provenance_ops ops = {
   .init=init,
-  .log_relation=log_relation,
+  .log_unknown_relation=log_unknown_relation,
+  .log_derived=log_derived,
+  .log_generated=log_generated,
+  .log_used=log_used,
+  .log_informed=log_informed,
   .log_task=log_task,
   .log_inode=log_inode,
   .log_str=log_str,
   .log_disc=log_disc,
   .log_msg=log_msg,
   .log_shm=log_shm,
-  .log_sock=log_sock,
   .log_packet=log_packet,
   .log_address=log_address,
   .log_file_name=log_file_name,
