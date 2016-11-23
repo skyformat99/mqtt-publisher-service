@@ -217,6 +217,10 @@ void log_ifc(struct ifc_context_struct* ifc){
   //append_entity(ifc_to_json(ifc));
 }
 
+void log_iattr(struct iattr_prov_struct* iattr){
+  append_entity(iattr_to_json(iattr));
+}
+
 void log_error(char* error){
   simplog.writeLog(SIMPLOG_ERROR, "From library: %s", error);
 }
@@ -238,6 +242,7 @@ struct provenance_ops ops = {
   .log_address=log_address,
   .log_file_name=log_file_name,
   .log_ifc=log_ifc,
+  .log_iattr=log_iattr,
   .log_error=log_error
 };
 
