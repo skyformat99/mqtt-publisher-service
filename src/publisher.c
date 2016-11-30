@@ -241,19 +241,19 @@ struct provenance_ops ops = {
   .log_error=log_error
 };
 
-void publish_json(const char* json, bool retain){
+void publish_json(char* topic, const char* json, bool retain){
   size_t len;
   char* buf;
   const size_t inlen = strlen(json);
   len = compress64encodeBound(inlen);
   buf = (char*)malloc(len);
   compress64encode(json, inlen, buf, len);
-  mqqt_publish(config.topic, buf, config.qos, retain);
+  mqqt_publish(topic, buf, config.qos, retain);
   free(buf);
 }
 
 void print_json(char* json){
-  publish_json(json, false);
+  publish_json(config.topic, json, false);
 }
 
 int main(int argc, char* argv[])
@@ -287,7 +287,7 @@ int main(int argc, char* argv[])
         MQTTCLIENT_PERSISTENCE_NONE, NULL);
     mqtt_connect(true);
 
-    publish_json(machine_description_json(json), true);
+    publish_json("camflow/machines", machine_description_json(json), true);
 
     rc = provenance_register(&ops);
     if(rc){
