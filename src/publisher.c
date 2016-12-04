@@ -29,7 +29,8 @@ typedef struct{
   char address[PATH_MAX]; // assuming we could use unix socket
   char username[1024];
   char password[1024];
-  char topic[MAX_TOPIC_LENGTH];
+  char provenance_topic[MAX_TOPIC_LENGTH];
+  char machine_topic[MAX_TOPIC_LENGTH];
   char client_id[MAX_MQTT_CLIENT_ID_LENGTH];
 } configuration;
 
@@ -264,7 +265,7 @@ void publish_json(char* topic, const char* json, bool retain){
 }
 
 void print_json(char* json){
-  publish_json(config.topic, json, false);
+  publish_json(config.provenance_topic, json, false);
 }
 
 int main(int argc, char* argv[])
@@ -290,15 +291,17 @@ int main(int argc, char* argv[])
       simplog.writeLog(SIMPLOG_ERROR, "Failed retrieving machine ID.");
       exit(rc);
     }
-    snprintf(config.topic, MAX_TOPIC_LENGTH, "camflow/%u/provenance", machine_id);
+    snprintf(config.provenance_topic, MAX_TOPIC_LENGTH, "camflow/provenance/%u", machine_id);
+    snprintf(config.machine_topic, MAX_TOPIC_LENGTH, "camflow/machines/%u", machine_id);
     snprintf(config.client_id, MAX_MQTT_CLIENT_ID_LENGTH, "%u", machine_id); // should be no more than 23
-    simplog.writeLog(SIMPLOG_INFO, "Main topic: %s.", config.topic);
+    simplog.writeLog(SIMPLOG_INFO, "Provenance topic: %s.", config.provenance_topic);
+    simplog.writeLog(SIMPLOG_INFO, "Machine topic: %s.", config.machine_topic);
 
     MQTTClient_create(&client, config.address, config.client_id,
         MQTTCLIENT_PERSISTENCE_NONE, NULL);
     mqtt_connect(true);
 
-    publish_json("camflow/machines", machine_description_json(json), true);
+    publish_json(config.machine_topic, machine_description_json(json), true);
 
     rc = provenance_register(&ops);
     if(rc){
