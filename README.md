@@ -26,3 +26,10 @@ password=test
 ; message delivered: 0 at most once, 1 at least once, 2 exactly once
 qos=1
 ```
+
+## Checking logs
+
+```
+cat /tmp/audit.log # CamFlow service logs
+cat /tmp/mosquitto.log # Mosquitto logs
+```
