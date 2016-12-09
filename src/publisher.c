@@ -88,7 +88,7 @@ void mqtt_connect(bool cleansession){
 
 static pthread_mutex_t l_mqtt = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 /* publish payload on mqtt */
-void mqqt_publish(char* topic, char* payload, int qos, bool retained){
+void mqtt_publish(char* topic, char* payload, int qos, bool retained){
   pid_t tid = gettid();
   int rc;
   int retry=0; // give up after a while.
@@ -260,7 +260,7 @@ void publish_json(char* topic, const char* json, bool retain){
   len = compress64encodeBound(inlen);
   buf = (char*)malloc(len);
   compress64encode(json, inlen, buf, len);
-  mqqt_publish(topic, buf, config.qos, retain);
+  mqtt_publish(topic, buf, config.qos, retain);
   free(buf);
 }
 
@@ -313,7 +313,7 @@ int main(int argc, char* argv[])
       sleep(1);
       flush_json();
       if(i++%10==0){
-        mqqt_publish("keepalive", NULL, 0, false); // keep alive
+        mqtt_publish("keepalive", NULL, 0, false); // keep alive
       }
     }
 
