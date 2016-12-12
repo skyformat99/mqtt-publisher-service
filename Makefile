@@ -10,6 +10,7 @@ prepare:
 	cd ./build && git clone https://github.com/eclipse/paho.mqtt.c.git
 	cd ./build/paho.mqtt.c && git checkout tags/v1.1.0
 	cd ./build/paho.mqtt.c && sudo $(MAKE) all
+	cd ./build/paho.mqtt.c && sudo $(MAKE) install
 	cd ./build/paho.mqtt.c && sudo $(MAKE) install prefix=/usr
 
 mosquitto:
