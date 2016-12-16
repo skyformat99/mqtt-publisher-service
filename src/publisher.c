@@ -214,10 +214,6 @@ void log_file_name(struct file_name_struct* f_name){
   append_entity(pathname_to_json(f_name));
 }
 
-void log_ifc(struct ifc_context_struct* ifc){
-  //append_entity(ifc_to_json(ifc));
-}
-
 void log_iattr(struct iattr_prov_struct* iattr){
   append_entity(iattr_to_json(iattr));
 }
@@ -247,7 +243,6 @@ struct provenance_ops ops = {
   .log_packet=log_packet,
   .log_address=log_address,
   .log_file_name=log_file_name,
-  .log_ifc=log_ifc,
   .log_iattr=log_iattr,
   .log_xattr=log_xattr,
   .log_error=log_error
