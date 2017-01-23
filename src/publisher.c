@@ -88,7 +88,7 @@ void mqtt_connect(bool cleansession){
 
 static pthread_mutex_t l_mqtt = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 /* publish payload on mqtt */
-void mqqt_publish(char* topic, char* payload, int qos, bool retained){
+void mqtt_publish(char* topic, char* payload, int qos, bool retained){
   pid_t tid = gettid();
   int rc;
   int retry=0; // give up after a while.
@@ -140,6 +140,7 @@ void _init_logs( void ){
   simplog.setLineWrap(false);
   simplog.setLogSilentMode(true);
   simplog.setLogDebugLevel(SIMPLOG_VERBOSE);
+  provenance_opaque_file(LOG_PATH, true);
 }
 
 void init( void ){
@@ -214,10 +215,6 @@ void log_file_name(struct file_name_struct* f_name){
   append_entity(pathname_to_json(f_name));
 }
 
-void log_ifc(struct ifc_context_struct* ifc){
-  //append_entity(ifc_to_json(ifc));
-}
-
 void log_iattr(struct iattr_prov_struct* iattr){
   append_entity(iattr_to_json(iattr));
 }
@@ -225,6 +222,10 @@ void log_iattr(struct iattr_prov_struct* iattr){
 
 void log_xattr(struct xattr_prov_struct* xattr){
   append_entity(xattr_to_json(xattr));
+}
+
+void log_packet_content(struct pckcnt_struct* cnt){
+  append_entity(pckcnt_to_json(cnt));
 }
 
 void log_error(char* error){
@@ -247,9 +248,9 @@ struct provenance_ops ops = {
   .log_packet=log_packet,
   .log_address=log_address,
   .log_file_name=log_file_name,
-  .log_ifc=log_ifc,
   .log_iattr=log_iattr,
   .log_xattr=log_xattr,
+  .log_packet_content=log_packet_content,
   .log_error=log_error
 };
 
@@ -260,7 +261,7 @@ void publish_json(char* topic, const char* json, bool retain){
   len = compress64encodeBound(inlen);
   buf = (char*)malloc(len);
   compress64encode(json, inlen, buf, len);
-  mqqt_publish(topic, buf, config.qos, retain);
+  mqtt_publish(topic, buf, config.qos, retain);
   free(buf);
 }
 
@@ -313,7 +314,7 @@ int main(int argc, char* argv[])
       sleep(1);
       flush_json();
       if(i++%10==0){
-        mqqt_publish("keepalive", NULL, 0, false); // keep alive
+        mqtt_publish("keepalive", NULL, 0, false); // keep alive
       }
     }
 

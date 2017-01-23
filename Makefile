@@ -11,6 +11,12 @@ prepare:
 	cd ./build/paho.mqtt.c && git checkout tags/v1.1.0
 	cd ./build/paho.mqtt.c && sudo $(MAKE) all
 	cd ./build/paho.mqtt.c && sudo $(MAKE) install
+	cd ./build/paho.mqtt.c && sudo $(MAKE) install prefix=/usr
+
+mosquitto:
+	sudo cp -f ./mosquitto.conf /etc/mosquitto/mosquitto.conf
+	sudo systemctl enable mosquitto.service
+	sudo systemctl start mosquitto.service
 
 install:
 	cd ./src && sudo $(MAKE) install
