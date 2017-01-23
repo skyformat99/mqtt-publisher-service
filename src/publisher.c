@@ -224,6 +224,10 @@ void log_xattr(struct xattr_prov_struct* xattr){
   append_entity(xattr_to_json(xattr));
 }
 
+void log_packet_content(struct pckcnt_struct* cnt){
+  append_entity(pckcnt_to_json(cnt));
+}
+
 void log_error(char* error){
   simplog.writeLog(SIMPLOG_ERROR, "From library: %s", error);
 }
@@ -246,6 +250,7 @@ struct provenance_ops ops = {
   .log_file_name=log_file_name,
   .log_iattr=log_iattr,
   .log_xattr=log_xattr,
+  .log_packet_content=log_packet_content,
   .log_error=log_error
 };
 
