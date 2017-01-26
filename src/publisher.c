@@ -149,7 +149,7 @@ void init( void ){
 }
 
 void log_str(struct str_struct* data){
-  append_message(str_msg_to_json(data));
+  append_entity(str_msg_to_json(data));
 }
 
 void log_unknown_relation(struct relation_struct* relation){
