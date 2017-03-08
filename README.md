@@ -1,5 +1,12 @@
 # MQTT publisher service
 
+## Build Status
+
+| Branch | Status                                                                                  | SonarQube |
+|--------|-----------------------------------------------------------------------------------------|-----------|
+| master | [![Master Build Status](https://api.travis-ci.org/CamFlow/mqtt-publisher-service.svg?branch=master)](https://travis-ci.org/CamFlow/mqtt-publisher-service/branches)  |[![SonarQube Status](https://sonarqube.com//api/badges/gate?key=camflow%3Amqtt)]()   |
+| dev    | [![Dev Build Status](https://api.travis-ci.org/CamFlow/mqtt-publisher-service.svg?branch=dev)](https://travis-ci.org/CamFlow/mqtt-publisher-service/branches)      |[![SonarQube Status](https://sonarqube.com//api/badges/gate?key=camflow%3Amqtt%3Adev)](https://sonarqube.com/dashboard?id=camflow%3Amqtt%3Adev)   |
+
 ## Install
 
 We assume CamFlow has been installed on your Linux machine, please see instruction [here](https://github.com/CamFlow/camflow-install), or [here](https://github.com/CamFlow/vagrant) to setup a VM through vagrant.
