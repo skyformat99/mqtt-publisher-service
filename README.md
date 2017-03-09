@@ -4,7 +4,7 @@
 
 | Branch | Status                                                                                  | SonarQube |
 |--------|-----------------------------------------------------------------------------------------|-----------|
-| master | [![Master Build Status](https://api.travis-ci.org/CamFlow/mqtt-publisher-service.svg?branch=master)](https://travis-ci.org/CamFlow/mqtt-publisher-service/branches)  |[![SonarQube Status](https://sonarqube.com//api/badges/gate?key=camflow%3Amqtt)]()   |
+| master | [![Master Build Status](https://api.travis-ci.org/CamFlow/mqtt-publisher-service.svg?branch=master)](https://travis-ci.org/CamFlow/mqtt-publisher-service/branches)  |[![SonarQube Status](https://sonarqube.com//api/badges/gate?key=camflow%3Amqtt)](https://sonarqube.com/dashboard?id=camflow%3Amqtt)   |
 | dev    | [![Dev Build Status](https://api.travis-ci.org/CamFlow/mqtt-publisher-service.svg?branch=dev)](https://travis-ci.org/CamFlow/mqtt-publisher-service/branches)      |[![SonarQube Status](https://sonarqube.com//api/badges/gate?key=camflow%3Amqtt%3Adev)](https://sonarqube.com/dashboard?id=camflow%3Amqtt%3Adev)   |
 
 Automated Travis test run the following operation:
