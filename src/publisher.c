@@ -55,9 +55,7 @@ static int handler(void* user, const char* section, const char* name,
     }else if(MATCH("mqtt", "password")){
       strncpy(pconfig->password, value, 1024);
       simplog.writeLog(SIMPLOG_INFO, "MQTT password %s", pconfig->password);
-    } else if(strcmp(section, "taint") == 0){
-      add_taint(strtoul(value, NULL, 0), name);
-    }else{
+    } else{
         return 0;  /* unknown section/name, error */
     }
     return 1;
